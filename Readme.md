@@ -7,6 +7,33 @@ Rich Error is an error library that:
 - provides an easy to use API
 - follows go1.13 errors conventions
 
+## Installation
+
+As we're publishing this module in our private repo, you'll need to do following steps before running `go get`:
+
+1. Add repo address to GOPRIVATE evn, to prevent go from using the proxy server:
+
+    ```bash
+    go env -w GOPRIVATE=gitlab.com/orderhq/rich-error
+    ```
+
+    This is a shortcut for `GONOPROXY` and `GONOSUMDB`.
+
+2. Add your Gitlab credentials to allow git to access to your gitlab account using http API
+
+    After creating a new `Personal Access Token` with `write_repository` permission from "Profile" -> "Access Tokens",
+    create a `~/.netrc` file with the following content
+
+    ```
+    machine gitlab.com
+    login oauth2
+    password <your access token>
+
+    ```
+
+    `~/.netrc` is the file that `curl` uses for authentication purposes. As `git` uses `curl` internally this will allow
+    git to access to your repository by git-over-http
+
 ## Public API
 
 For more information about public API checkout [contract.go](./contract.go)
