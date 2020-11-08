@@ -11,7 +11,7 @@ Rich Error is an error library that:
 
 As we're publishing this module in our private repo, you'll need to do following steps before running `go get`:
 
-1. Add repo address to GOPRIVATE evn, to prevent go from using the proxy server:
+1. Add repo address to GOPRIVATE env, to prevent go from using the proxy server:
 
     ```bash
     go env -w GOPRIVATE=gitlab.com/orderhq/rich-error
