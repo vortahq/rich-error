@@ -89,3 +89,7 @@ WithError tries to fill type, level, type, operation, etc. if they haven't been 
 ### NilIfNoError
 
 NilIfNoError returns `nil` if the underling error is not present. It helps you avoid `if err != nil` check as much as possible.
+
+### JsonMode
+
+JsonMode is a flag controlling the format of generated output, the default format is string. You can change the output format by setting the `JsonMode` to `true`.

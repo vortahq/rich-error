@@ -1,1 +1,28 @@
-.idea
+# IDEs & Text editors
+/.idea
+/.vscode
+*.sw[op]
+
+# Golang
+*.pb.go
+
+# Python
+*.py[cio]
+*_pb2.py
+*_pb2_grpc.py
+*.egg
+*.whl
+*.egg-info
+/dist
+/build
+/src/python
+/.eggs
+
+# Web
+*.js
+*.ts
+!/index.js
+node_modules/*
+
+# OS
+.DS_Store
