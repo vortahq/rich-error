@@ -2,7 +2,9 @@ package richerror
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
+	"strings"
 )
 
 type richError struct {
@@ -115,6 +117,56 @@ func (r *richError) NilIfNoError() RichError {
 	return r
 }
 
+func (r *richError) String() string {
+	if JsonMode == true {
+		return string(r.json())
+	}
+
+	return r.string(0)
+}
+
+func (r *richError) string(step int) string {
+	msg := ``
+
+	if r.message != "" {
+		msg += fmt.Sprintf("message: %s ", r.message)
+	}
+
+	if r.operation != "" {
+		msg += fmt.Sprintf("operation: %s ", string(r.operation))
+	}
+
+	if r.level != UnknownLevel {
+		msg += fmt.Sprintf("level: %d ", r.level)
+	}
+
+	if r.kind != UnknownKind {
+		msg += fmt.Sprintf("kind: %d ", r.kind)
+	}
+
+	if r._type != nil {
+		msg += fmt.Sprintf("type: %d ", r._type)
+	}
+
+	if r.fields != nil {
+		msg += fmt.Sprintf("fileds: %+v ", r.fields)
+	}
+
+	msg += fmt.Sprintf("code_info: %s ", r.codeInfo.String())
+
+	if r.wrappedError != nil {
+		innerError, ok := r.wrappedError.(*richError)
+		if ok {
+			return fmt.Sprintf("%s%s\n%s", strings.Repeat("\t", step), msg, innerError.string(step+1))
+		}
+
+		return fmt.Sprintf("%s%s\n%smessage: %s\n", strings.Repeat("\t", step), msg,
+			strings.Repeat("\t", step+1), r.wrappedError.Error())
+	}
+
+	return fmt.Sprintf("%s%s\n", strings.Repeat("\t", step), msg)
+}
+
 func (r *richError) Error() string {
 	return r.message
 }
@@ -132,7 +184,7 @@ func (r *richError) Is(target error) bool {
 }
 
 func (r *richError) As(target interface{}) bool {
-	return errors.As(r, target)
+	return errors.As(r, &target)
 }
 
 func (r *richError) Metadata() Metadata {

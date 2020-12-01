@@ -40,9 +40,9 @@ type Metadata map[string]interface{}
 
 // CodeInfo stores runtime information about the code
 type CodeInfo struct {
-	LineNumber   int
-	FileName     string
-	FunctionName string
+	LineNumber   int    `json:"line_number,omitempty"`
+	FileName     string `json:"file_name,omitempty"`
+	FunctionName string `json:"function_name,omitempty"`
 }
 
 func (s *CodeInfo) String() string {
