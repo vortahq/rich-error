@@ -110,7 +110,7 @@ func (r *richError) WithError(err error) *richError {
 
 // NilIfNoError returns nil if inner error is nil
 func (r *richError) NilIfNoError() RichError {
-	if r.Unwrap() == nil {
+	if r.wrappedError == nil {
 		return nil
 	}
 
