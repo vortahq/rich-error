@@ -12,7 +12,7 @@ type richError struct {
 	message      string
 	fields       Metadata
 
-	codeInfo CodeInfo
+	runtimeInfo RuntimeInfo
 
 	_type     Type
 	level     Level
@@ -33,9 +33,9 @@ func New(message string) *richError {
 	return &richError{
 		wrappedError: nil,
 		message:      message,
-		fields:       make(map[string]interface{}, 0),
+		fields:       make(map[string]interface{}),
 
-		codeInfo: CodeInfo{
+		runtimeInfo: RuntimeInfo{
 			LineNumber:   lineNumber,
 			FileName:     fileName,
 			FunctionName: functionName,
@@ -68,11 +68,13 @@ func (r *richError) WithType(_type Type) *richError {
 	return r
 }
 
+// WithLevel assigns an error level to the error which can be used for log purposes
 func (r *richError) WithLevel(level Level) *richError {
 	r.level = level
 	return r
 }
 
+// WithKind assigns an error kind to the error which can be used to decide the return code of the failed request
 func (r *richError) WithKind(kind Kind) *richError {
 	r.kind = kind
 	return r
@@ -83,32 +85,36 @@ func (r *richError) WithOperation(operation Operation) *richError {
 	return r
 }
 
-// WithError make the caller wraps the argument
+// WithError wraps the underlying error and copies level, kind, type, and operation of the underlying error if not explicitly specified
 func (r *richError) WithError(err error) *richError {
 	r.wrappedError = err
 
-	if re, ok := err.(RichError); ok {
-		if r._type == nil {
-			r._type = re.Type()
-		}
+	var wrappedRichError RichError
+	ok := errors.As(err, &wrappedRichError)
+	if !ok {
+		return r
+	}
 
-		if r.level == UnknownLevel {
-			r.level = re.Level()
-		}
+	if r.level == UnknownLevel {
+		r.level = wrappedRichError.Level()
+	}
 
-		if r.kind == UnknownKind {
-			r.kind = re.Kind()
-		}
+	if r.kind == UnknownKind {
+		r.kind = wrappedRichError.Kind()
+	}
 
-		if r.operation == "" {
-			r.operation = re.Operation()
-		}
+	if r.operation == "" {
+		r.operation = wrappedRichError.Operation()
+	}
+
+	if r._type == nil {
+		r._type = wrappedRichError.Type()
 	}
 
 	return r
 }
 
-// NilIfNoError returns nil if inner error is nil
+// NilIfNoError returns nil if wrapped error is nil, useful for direct return of the error
 func (r *richError) NilIfNoError() RichError {
 	if r.wrappedError == nil {
 		return nil
@@ -117,11 +123,8 @@ func (r *richError) NilIfNoError() RichError {
 	return r
 }
 
+// String representation of the error
 func (r *richError) String() string {
-	if JsonMode == true {
-		return string(r.json())
-	}
-
 	return r.string(0)
 }
 
@@ -133,26 +136,26 @@ func (r *richError) string(step int) string {
 	}
 
 	if r.operation != "" {
-		msg += fmt.Sprintf("operation: %s ", string(r.operation))
+		msg += fmt.Sprintf("operation: %s ", r.operation)
 	}
 
 	if r.level != UnknownLevel {
-		msg += fmt.Sprintf("level: %d ", r.level)
+		msg += fmt.Sprintf("level: %s ", r.level)
 	}
 
 	if r.kind != UnknownKind {
-		msg += fmt.Sprintf("kind: %d ", r.kind)
+		msg += fmt.Sprintf("kind: %s ", r.kind)
 	}
 
 	if r._type != nil {
-		msg += fmt.Sprintf("type: %d ", r._type)
+		msg += fmt.Sprintf("type: %s ", r._type)
 	}
 
 	if r.fields != nil {
 		msg += fmt.Sprintf("fileds: %+v ", r.fields)
 	}
 
-	msg += fmt.Sprintf("code_info: %s ", r.codeInfo.String())
+	msg += fmt.Sprintf("code_info: %s ", r.runtimeInfo.String())
 
 	if r.wrappedError != nil {
 		innerError, ok := r.wrappedError.(*richError)
@@ -191,8 +194,8 @@ func (r *richError) Metadata() Metadata {
 	return r.fields
 }
 
-func (r *richError) CodeInfo() CodeInfo {
-	return r.codeInfo
+func (r *richError) RuntimeInfo() RuntimeInfo {
+	return r.runtimeInfo
 }
 
 func (r *richError) Operation() Operation {
@@ -200,6 +203,10 @@ func (r *richError) Operation() Operation {
 }
 
 func (r *richError) Level() Level {
+	if r.level == UnknownLevel {
+		return Error
+	}
+
 	return r.level
 }
 
@@ -208,5 +215,18 @@ func (r *richError) Type() Type {
 }
 
 func (r *richError) Kind() Kind {
+	if r.kind == UnknownKind {
+		return Unknown
+	}
+
 	return r.kind
+}
+
+// Deprecated: CodeInfo has been renamed to RuntimeInfo and will be removed in V2
+func (r *richError) CodeInfo() CodeInfo {
+	return CodeInfo{
+		LineNumber:   r.runtimeInfo.LineNumber,
+		FileName:     r.runtimeInfo.FileName,
+		FunctionName: r.runtimeInfo.FunctionName,
+	}
 }

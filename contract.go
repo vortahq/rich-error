@@ -9,10 +9,13 @@ type RichError interface {
 	As(target interface{}) bool
 
 	Metadata() Metadata
-	CodeInfo() CodeInfo
+	RuntimeInfo() RuntimeInfo
 
 	Operation() Operation
 	Level() Level
 	Type() Type
 	Kind() Kind
+
+	// Deprecated: CodeInfo has been renamed to RuntimeInfo and will be removed in V2
+	CodeInfo() CodeInfo
 }
