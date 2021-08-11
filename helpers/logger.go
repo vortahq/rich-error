@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	richerror "gitlab.com/orderhq/rich-error"
 )
 
@@ -40,6 +42,8 @@ func (h helper) log(path string, err error) {
 		return
 	}
 
+	h.logToSentry(path, err)
+
 	var rErr richerror.RichError
 	ok := errors.As(err, &rErr)
 	if !ok {
@@ -48,6 +52,38 @@ func (h helper) log(path string, err error) {
 	}
 
 	h.logRichError(path, rErr)
+}
+
+func (h helper) logToSentry(path string, err error) {
+	if !h.sentryEnabled {
+		return
+	}
+
+	sentryHub := sentry.CurrentHub().Clone()
+
+	var rErr richerror.RichError
+	ok := errors.As(err, &rErr)
+	if !ok {
+		sentryHub.CaptureException(err)
+		return
+	}
+
+	event := sentry.NewEvent()
+
+	event.Contexts = rErr.Metadata()
+	event.Environment = h.environment
+	event.Level = rErr.Level().SentryLevel()
+	event.Message = rErr.Error()
+	event.ServerName = h.serverName
+	event.Timestamp = time.Now()
+
+	event.Tags["path"] = path
+	event.Tags["kind"] = rErr.Kind().String()
+	if rErr.Operation() != "" {
+		event.Tags["operation"] = string(rErr.Operation())
+	}
+
+	sentryHub.CaptureEvent(event)
 }
 
 func (h helper) logNormalError(path string, err error) {

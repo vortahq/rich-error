@@ -11,9 +11,13 @@ type helper struct {
 	basicLogger     basicLogger
 	formattedLogger formattedLogger
 	contextLogger   contextLogger
+
+	sentryEnabled bool
+	environment   string
+	serverName    string
 }
 
-func New(logger basicLogger) *helper {
+func New() *helper {
 	return &helper{}
 }
 
@@ -27,6 +31,18 @@ func (h *helper) WithFormattedLogger(logger formattedLogger) {
 
 func (h *helper) WithContextLogger(logger contextLogger) {
 	h.contextLogger = logger
+}
+
+func (h *helper) WithSentry() {
+	h.sentryEnabled = true
+}
+
+func (h *helper) WithEnvironment(env string) {
+	h.environment = env
+}
+
+func (h *helper) WithServerName(name string) {
+	h.serverName = name
 }
 
 func (h helper) recover(path string) error {
