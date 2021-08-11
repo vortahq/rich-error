@@ -1,5 +1,7 @@
 package richerror
 
+import "google.golang.org/grpc"
+
 // RichError is a richer type of error that holds runtime information with itself
 type RichError interface {
 	String() string
@@ -9,7 +11,7 @@ type RichError interface {
 	As(target interface{}) bool
 
 	Metadata() Metadata
-	RuntimeInfo() RuntimeInfo
+	RuntimeInfo() []RuntimeInfo
 
 	Operation() Operation
 	Level() Level
@@ -18,4 +20,15 @@ type RichError interface {
 
 	// Deprecated: CodeInfo has been renamed to RuntimeInfo and will be removed in V2
 	CodeInfo() CodeInfo
+}
+
+// Operation can be used to group or organize error
+type Operation string
+
+// Metadata stores metadata of error
+type Metadata map[string]interface{}
+
+type GRPCHelper interface {
+	UnaryInterceptor() grpc.UnaryServerInterceptor
+	StreamInterceptor() grpc.StreamServerInterceptor
 }

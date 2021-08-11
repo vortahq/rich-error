@@ -1,13 +1,6 @@
 package richerror
 
-import (
-	"fmt"
-)
-
-// Type stores information that we want to show to user
-type Type interface {
-	String() string
-}
+import "google.golang.org/grpc/codes"
 
 // Kind hints about underlying cause of error
 type Kind kind
@@ -44,47 +37,33 @@ func (k Kind) MarshalJSON() ([]byte, error) {
 	return []byte(k.String()), nil
 }
 
-// Level identifies severity of the error
-type Level level
-type level uint8
-
-const (
-	UnknownLevel Level = iota
-	Fatal
-	Error
-	Warning
-	Info
-)
-
-var levelStrings = [...]string{"_", "Fatal", "Error", "Warning", "Info"}
-
-func (l Level) String() string {
-	return levelStrings[l]
+func (k Kind) GRPCStatusCode() codes.Code {
+	switch k {
+	case Canceled:
+		return codes.Canceled
+	case Unknown:
+		return codes.Unknown
+	case InvalidArgument:
+		return codes.InvalidArgument
+	case Timeout:
+		return codes.DeadlineExceeded
+	case NotFound:
+		return codes.NotFound
+	case AlreadyExists:
+		return codes.AlreadyExists
+	case PermissionDenied:
+		return codes.PermissionDenied
+	case TooManyRequests:
+		return codes.ResourceExhausted
+	case Unimplemented:
+		return codes.Unimplemented
+	case Internal:
+		return codes.Internal
+	case Unavailable:
+		return codes.Unavailable
+	case Unauthenticated:
+		return codes.Unauthenticated
+	default:
+		return codes.Unknown
+	}
 }
-
-func (l Level) MarshalJSON() ([]byte, error) {
-	return []byte(l.String()), nil
-}
-
-// Operation can be used to group or organize error
-type Operation string
-
-// Metadata stores metadata of error
-type Metadata map[string]interface{}
-
-// RuntimeInfo stores runtime information about the code
-type RuntimeInfo struct {
-	LineNumber   int    `json:"line_number,omitempty"`
-	FileName     string `json:"file_name,omitempty"`
-	FunctionName string `json:"function_name,omitempty"`
-}
-
-func (s *RuntimeInfo) String() string {
-	return fmt.Sprintf("In %s:%s line %d",
-		s.FileName,
-		s.FunctionName,
-		s.LineNumber)
-}
-
-// Deprecated: CodeInfo has been renamed to RuntimeInfo and will be removed in V2
-type CodeInfo RuntimeInfo

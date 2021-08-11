@@ -12,7 +12,7 @@ type richError struct {
 	message      string
 	fields       Metadata
 
-	runtimeInfo RuntimeInfo
+	runtimeInfo []RuntimeInfo
 
 	_type     Type
 	level     Level
@@ -35,10 +35,12 @@ func New(message string) *richError {
 		message:      message,
 		fields:       make(map[string]interface{}),
 
-		runtimeInfo: RuntimeInfo{
-			LineNumber:   lineNumber,
-			FileName:     fileName,
-			FunctionName: functionName,
+		runtimeInfo: []RuntimeInfo{
+			{
+				LineNumber:   lineNumber,
+				FileName:     fileName,
+				FunctionName: functionName,
+			},
 		},
 
 		_type:     nil,
@@ -111,6 +113,14 @@ func (r *richError) WithError(err error) *richError {
 		r._type = wrappedRichError.Type()
 	}
 
+	for key, value := range wrappedRichError.Metadata() {
+		if _, ok := r.fields[key]; !ok {
+			r.fields[key] = value
+		}
+	}
+
+	r.runtimeInfo = append(r.runtimeInfo, wrappedRichError.RuntimeInfo()...)
+
 	return r
 }
 
@@ -155,7 +165,7 @@ func (r *richError) string(step int) string {
 		msg += fmt.Sprintf("fileds: %+v ", r.fields)
 	}
 
-	msg += fmt.Sprintf("code_info: %s ", r.runtimeInfo.String())
+	msg += fmt.Sprintf("code_info: %s ", r.runtimeInfo[0].String())
 
 	if r.wrappedError != nil {
 		innerError, ok := r.wrappedError.(*richError)
@@ -171,7 +181,11 @@ func (r *richError) string(step int) string {
 }
 
 func (r *richError) Error() string {
-	return r.message
+	if r.wrappedError == nil {
+		return r.message
+	}
+
+	return fmt.Sprintf("%s -> %s", r.message, r.wrappedError.Error())
 }
 
 func (r *richError) Unwrap() error {
@@ -194,7 +208,7 @@ func (r *richError) Metadata() Metadata {
 	return r.fields
 }
 
-func (r *richError) RuntimeInfo() RuntimeInfo {
+func (r *richError) RuntimeInfo() []RuntimeInfo {
 	return r.runtimeInfo
 }
 
@@ -225,8 +239,8 @@ func (r *richError) Kind() Kind {
 // Deprecated: CodeInfo has been renamed to RuntimeInfo and will be removed in V2
 func (r *richError) CodeInfo() CodeInfo {
 	return CodeInfo{
-		LineNumber:   r.runtimeInfo.LineNumber,
-		FileName:     r.runtimeInfo.FileName,
-		FunctionName: r.runtimeInfo.FunctionName,
+		LineNumber:   r.runtimeInfo[0].LineNumber,
+		FileName:     r.runtimeInfo[0].FileName,
+		FunctionName: r.runtimeInfo[0].FunctionName,
 	}
 }

@@ -20,7 +20,7 @@ func (r *richError) MarshalJSON() ([]byte, error) {
 		Level:       r.level,
 		Kind:        r.kind,
 		Fields:      r.fields,
-		RuntimeInfo: r.runtimeInfo,
+		RuntimeInfo: r.runtimeInfo[0],
 	}
 
 	if r.Type() != nil {
