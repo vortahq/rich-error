@@ -5,10 +5,6 @@ import (
 	"fmt"
 )
 
-type ErrorLogger interface {
-	Log(err error)
-}
-
 // Logger is a struct that provides an ErrorLogger. The resulting ErrorLogger will log RichErrors given to it as
 // descriptive as it can (based on the loggers abilities). Keep in mind that it's the module users' responsibility to
 // give the struct their desired loggers. It will try to use ContextLogger which logs the error along with all of its

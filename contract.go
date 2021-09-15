@@ -20,6 +20,10 @@ type RichError interface {
 	CodeInfo() CodeInfo
 }
 
+type ErrorLogger interface {
+	Log(err error)
+}
+
 // Operation can be used to group or organize error
 type Operation string
 
