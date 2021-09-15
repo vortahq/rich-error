@@ -9,7 +9,13 @@ type ErrorLogger interface {
 	Log(err error)
 }
 
+// Logger is a struct that provides an ErrorLogger. The resulting ErrorLogger will log RichErrors given to it as
+// descriptive as it can (based on the loggers abilities). Keep in mind that it's the module users' responsibility to
+// give the struct their desired loggers. It will try to use ContextLogger which logs the error along with all of its
+// Metadata. If not exists it will try FormattedLogger, BasicLogger, and GoLogger in that order. Finally, if no logger
+// has been defined it will use fmt.Println to log the error.
 type Logger struct {
+	GoLogger        GoLogger
 	BasicLogger     BasicLogger
 	FormattedLogger FormattedLogger
 	ContextLogger   ContextLogger
@@ -24,6 +30,12 @@ func (l Logger) Log(err error) {
 	}
 
 	l.logRichError(rErr)
+}
+
+type GoLogger interface {
+	Printf(format string, v ...interface{})
+	Println(v ...interface{})
+	Fatalf(format string, v ...interface{})
 }
 
 type BasicLogger interface {
@@ -66,6 +78,11 @@ func (l Logger) logNormalError(err error) {
 
 	if l.BasicLogger != nil {
 		l.BasicLogger.Error(err.Error())
+		return
+	}
+
+	if l.GoLogger != nil {
+		l.GoLogger.Println(err.Error())
 		return
 	}
 
@@ -129,5 +146,15 @@ func (l Logger) logRichError(err RichError) {
 		return
 	}
 
-	fmt.Printf("%s: %s", err.Kind(), err.Error())
+	if l.GoLogger != nil {
+		if err.Level() == Fatal {
+			l.GoLogger.Fatalf("%s: %s\n", err.Kind(), err.Error())
+			return
+		}
+
+		l.GoLogger.Printf("%s: %s\n", err.Kind(), err.Error())
+		return
+	}
+
+	fmt.Printf("%s: %s\n", err.Kind(), err.Error())
 }
