@@ -1,19 +1,24 @@
-package helpers
+package richerror
 
 import (
 	"context"
 	"errors"
-
-	richerror "gitlab.com/orderhq/rich-error"
+	"fmt"
+	"runtime/debug"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+type GRPCInterceptors struct {
+	Logger ErrorLogger
+}
+
 // UnaryInterceptor returns a gRPC unary interceptor that intercepts every gRPC request and in case of error prints
 // (or logs) error and sets the grpc status code according to the error Kind. It also recovers panics.
-func (h helper) UnaryInterceptor() grpc.UnaryServerInterceptor {
+func (h GRPCInterceptors) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		defer func() {
 			if e := h.recover(info.FullMethod); e != nil {
@@ -34,7 +39,7 @@ func (h helper) UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 // StreamInterceptor returns a gRPC stream interceptor that intercepts every gRPC request and in case of error prints
 // (or logs) error and sets the grpc status code according to the error Kind. It also recovers panics.
-func (h helper) StreamInterceptor() grpc.StreamServerInterceptor {
+func (h GRPCInterceptors) StreamInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		defer func() {
 			if e := h.recover(info.FullMethod); e != nil {
@@ -52,8 +57,22 @@ func (h helper) StreamInterceptor() grpc.StreamServerInterceptor {
 	}
 }
 
-func (h helper) getGPRCError(err error) error {
-	var rErr richerror.RichError
+func (GRPCInterceptors) recover(path string) error {
+	if r := recover(); r != nil {
+		errType := StringType(fmt.Sprintf("panic: %s", r))
+		err := New("panic detected").WithType(errType).WithFields(Metadata{
+			"path":        path,
+			"panic":       r,
+			"stack_trace": debug.Stack(),
+		})
+		return err
+	}
+
+	return nil
+}
+
+func (GRPCInterceptors) getGPRCError(err error) error {
+	var rErr RichError
 	if !errors.As(err, &rErr) {
 		message := err.Error()
 		if rErr.Type() != nil {
@@ -64,4 +83,12 @@ func (h helper) getGPRCError(err error) error {
 	}
 
 	return status.Errorf(codes.Unknown, "error: %s", err.Error())
+}
+
+func (h GRPCInterceptors) log(path string, err error) {
+	if strings.HasPrefix(path, "/grpc.reflection.v1alpha.ServerReflection/") {
+		return
+	}
+
+	h.Logger.Log(err)
 }
