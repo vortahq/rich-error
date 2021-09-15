@@ -12,6 +12,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// GRPCInterceptors is a helper that provides unary and stream grpc interceptors that will catch and log errors
+// of your grpc server. If your grpc services return RichError it will set the grpc status code based on their Kind.
+// Keep in mind that these interceptors will not log errors regarding the reflection API.
 type GRPCInterceptors struct {
 	Logger ErrorLogger
 }

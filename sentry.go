@@ -9,6 +9,9 @@ import (
 
 type SentryLogger func(err error)
 
+// SentryLoggerFactory is a Factory that creates a SentryLogger based on the options given to it.
+// The returned SentryLogger will report details of your errors (if they're RichError) to the sentry using `sentry-go`
+// module.
 func SentryLoggerFactory(options ...SentryLoggerOptions) SentryLogger {
 	option := aggregateOptions(options...)
 

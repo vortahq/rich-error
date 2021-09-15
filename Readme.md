@@ -42,7 +42,7 @@ For more information about public API checkout [contract.go](./contract.go)
 
 Using rich error is easy, you can create a new RichError using `richerror.New("error message")`. It automatically adds
 runtime information to your error (like line number, file name, etc.). If you wish to add extra information to your error
-you can use following methods. You can chain them together and with the exception of `NilIfNoError` their ordering is not
+you can use following methods. You can chain them together and except `NilIfNoError` their ordering is not
 important.
 
 ### WithFields & WithField
@@ -93,3 +93,11 @@ NilIfNoError returns `nil` if the underling error is not present. It helps you a
 ### JsonMode
 
 JsonMode is a flag controlling the format of generated output, the default format is string. You can change the output format by setting the `JsonMode` to `true`.
+
+## Helpers
+
+This package provides a set of helper function and structs to help users to utilize the full power of the RichError.
+Currently, there are following constructs:
+- **gRPC interception** which uses RichError's Kind to determine gRPC's status code.
+- **Logger** which tries to log RichErrors in the most complete way (based on the logger given to it).
+- **Sentry** which reports errors to sentry using `sentry-go` and uses RichErrors metadata to enrich the reported errors.
