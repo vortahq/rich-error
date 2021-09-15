@@ -10,8 +10,8 @@ import (
 // SentryLogger is a ErrorLogger that logs to sentry. The returned ErrorLogger will report details of your errors (if
 // they're RichError) to the sentry using `sentry-go` module.
 type SentryLogger struct {
-	environment string
-	serverName  string
+	Environment string
+	ServerName  string
 }
 
 func (s SentryLogger) Log(err error) {
@@ -27,10 +27,10 @@ func (s SentryLogger) Log(err error) {
 	event := sentry.NewEvent()
 
 	event.Contexts = rErr.Metadata()
-	event.Environment = s.environment
+	event.Environment = s.Environment
 	event.Level = rErr.Level().SentryLevel()
 	event.Message = rErr.Error()
-	event.ServerName = s.serverName
+	event.ServerName = s.ServerName
 	event.Timestamp = time.Now()
 
 	event.Tags["kind"] = rErr.Kind().String()
