@@ -5,6 +5,21 @@ import (
 	"fmt"
 )
 
+// ChainLogger is an ErrorLogger that upon being called will call a set of loggers one after the other
+type ChainLogger struct {
+	Loggers []ErrorLogger
+}
+
+func (c ChainLogger) Log(err error) {
+	for _, logger := range c.Loggers {
+		logger.Log(err)
+	}
+}
+
+func ChainLoggers(loggers ...ErrorLogger) ErrorLogger {
+	return ChainLogger{Loggers: loggers}
+}
+
 // Logger is a struct that provides an ErrorLogger. The resulting ErrorLogger will log RichErrors given to it as
 // descriptive as it can (based on the loggers abilities). Keep in mind that it's the module users' responsibility to
 // give the struct their desired loggers. It will try to use ContextLogger which logs the error along with all of its
