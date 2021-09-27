@@ -189,10 +189,6 @@ func (r *richError) Error() string {
 }
 
 func (r *richError) Unwrap() error {
-	if innerError, ok := r.wrappedError.(interface{ Unwrap() error }); ok {
-		return innerError.Unwrap()
-	}
-
 	return r.wrappedError
 }
 
