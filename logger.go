@@ -104,7 +104,10 @@ func (l Logger) logRichError(err RichError) {
 	if l.ContextLogger != nil {
 		contexts := []interface{}{
 			"metadata", err.Metadata(),
-			"runtime_info", err.RuntimeInfo(),
+		}
+
+		if err.Level() != Info {
+			contexts = append(contexts, "runtime_info", err.RuntimeInfo())
 		}
 
 		switch err.Level() {
