@@ -62,7 +62,7 @@ func (l Logger) Log(err error) {
 }
 
 func (l Logger) LogInfo(msg string) {
-	l.logNormalError(New(msg).WithLevel(Info))
+	l.logRichError(New(msg).WithLevel(Info))
 }
 
 func (l Logger) LogInfoWithMetadata(msg string, metadata ...interface{}) {
