@@ -7,6 +7,8 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+var _ ErrorLogger = SentryLogger{}
+
 // SentryLogger is a ErrorLogger that logs to sentry. The returned ErrorLogger will report details of your errors (if
 // they're RichError) to the sentry using `sentry-go` module.
 type SentryLogger struct {
@@ -40,3 +42,7 @@ func (s SentryLogger) Log(err error) {
 
 	sentryHub.CaptureEvent(event)
 }
+
+func (s SentryLogger) LogInfo(string) {}
+
+func (s SentryLogger) LogInfoWithMetadata(string, ...interface{}) {}

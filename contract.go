@@ -21,7 +21,9 @@ type RichError interface {
 }
 
 type ErrorLogger interface {
-	Log(err error)
+	Log(error)
+	LogInfo(string)
+	LogInfoWithMetadata(string, ...interface{})
 }
 
 // Operation can be used to group or organize error
