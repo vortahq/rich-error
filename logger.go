@@ -5,6 +5,9 @@ import (
 	"fmt"
 )
 
+// Assert Logger implements ErrorLogger
+var _ ErrorLogger = ChainLogger{}
+
 // ChainLogger is an ErrorLogger that upon being called will call a set of loggers one after the other
 type ChainLogger struct {
 	Loggers []ErrorLogger
@@ -16,9 +19,24 @@ func (c ChainLogger) Log(err error) {
 	}
 }
 
+func (c ChainLogger) LogInfo(msg string) {
+	for _, logger := range c.Loggers {
+		logger.LogInfo(msg)
+	}
+}
+
+func (c ChainLogger) LogInfoWithMetadata(msg string, metadata ...interface{}) {
+	for _, logger := range c.Loggers {
+		logger.LogInfo(msg)
+	}
+}
+
 func ChainLoggers(loggers ...ErrorLogger) ErrorLogger {
 	return ChainLogger{Loggers: loggers}
 }
+
+// Assert Logger implements ErrorLogger
+var _ ErrorLogger = Logger{}
 
 // Logger is a struct that provides an ErrorLogger. The resulting ErrorLogger will log RichErrors given to it as
 // descriptive as it can (based on the loggers abilities). Keep in mind that it's the module users' responsibility to
@@ -41,6 +59,25 @@ func (l Logger) Log(err error) {
 	}
 
 	l.logRichError(rErr)
+}
+
+func (l Logger) LogInfo(msg string) {
+	l.logNormalError(New(msg).WithLevel(Info))
+}
+
+func (l Logger) LogInfoWithMetadata(msg string, metadata ...interface{}) {
+	err := New(msg).WithLevel(Info)
+	var key string
+	for _, datum := range metadata {
+		if key == "" {
+			key = datum.(string)
+			continue
+		}
+
+		err = err.WithField(key, datum)
+		key = ""
+	}
+	l.logRichError(err)
 }
 
 type GoLogger interface {
