@@ -4,29 +4,29 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/labstack/echo/v4"
 )
 
 func GetEchoLoggerMiddleware(logger ErrorLogger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		middleware.Recover()
 		return func(c echo.Context) (err error) {
 			defer func() {
 				if e := recoverAndReturnError(c.Path()); e != nil {
 					logger.Log(e)
-					code, msg := getErrorStatusCodeAndMessage(e)
-					c.Response().Status = code
-					c.Response().Writer.Write([]byte(msg)) // nolint: errcheck
+					c.Error(e)
 				}
 			}()
 
 			if err := next(c); err != nil {
 				logger.Log(err)
 				code, msg := getErrorStatusCodeAndMessage(err)
-				c.Response().Status = code
-				c.Response().Writer.Write([]byte(msg)) // nolint: errcheck
+				return echo.NewHTTPError(code, msg)
 			}
 
-			return err
+			return nil
 		}
 	}
 }
