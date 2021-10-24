@@ -33,7 +33,7 @@ func GetEchoLoggerMiddleware(logger ErrorLogger) echo.MiddlewareFunc {
 
 func getErrorStatusCodeAndMessage(err error) (int, string) {
 	var rErr RichError
-	if !errors.As(err, &rErr) {
+	if errors.As(err, &rErr) {
 		message := err.Error()
 		if rErr.Type() != nil {
 			message = rErr.Type().String()
