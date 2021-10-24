@@ -3,8 +3,6 @@ package richerror
 import (
 	"context"
 	"errors"
-	"fmt"
-	"runtime/debug"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -24,7 +22,7 @@ type GRPCInterceptors struct {
 func (h GRPCInterceptors) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		defer func() {
-			if e := h.recover(info.FullMethod); e != nil {
+			if e := recoverAndReturnError(info.FullMethod); e != nil {
 				h.log(info.FullMethod, e)
 				err = h.getGPRCError(e)
 			}
@@ -45,7 +43,7 @@ func (h GRPCInterceptors) UnaryInterceptor() grpc.UnaryServerInterceptor {
 func (h GRPCInterceptors) StreamInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		defer func() {
-			if e := h.recover(info.FullMethod); e != nil {
+			if e := recoverAndReturnError(info.FullMethod); e != nil {
 				h.log(info.FullMethod, e)
 				err = h.getGPRCError(e)
 			}
@@ -58,20 +56,6 @@ func (h GRPCInterceptors) StreamInterceptor() grpc.StreamServerInterceptor {
 
 		return
 	}
-}
-
-func (GRPCInterceptors) recover(path string) error {
-	if r := recover(); r != nil {
-		errType := StringType(fmt.Sprintf("panic: %s", r))
-		err := New("panic detected").WithType(errType).WithFields(Metadata{
-			"path":        path,
-			"panic":       r,
-			"stack_trace": debug.Stack(),
-		})
-		return err
-	}
-
-	return nil
 }
 
 func (GRPCInterceptors) getGPRCError(err error) error {

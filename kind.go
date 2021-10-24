@@ -1,6 +1,10 @@
 package richerror
 
-import "google.golang.org/grpc/codes"
+import (
+	"net/http"
+
+	"google.golang.org/grpc/codes"
+)
 
 // Kind hints about underlying cause of error
 type Kind kind
@@ -65,5 +69,36 @@ func (k Kind) GRPCStatusCode() codes.Code {
 		return codes.Unauthenticated
 	default:
 		return codes.Unknown
+	}
+}
+
+func (k Kind) HttpStatusCode() int {
+	switch k {
+	case Canceled:
+		return http.StatusInternalServerError
+	case Unknown:
+		return http.StatusInternalServerError
+	case InvalidArgument:
+		return http.StatusBadRequest
+	case Timeout:
+		return http.StatusInternalServerError
+	case NotFound:
+		return http.StatusNotFound
+	case AlreadyExists:
+		return http.StatusConflict
+	case PermissionDenied:
+		return http.StatusForbidden
+	case TooManyRequests:
+		return http.StatusTooManyRequests
+	case Unimplemented:
+		return http.StatusNotImplemented
+	case Internal:
+		return http.StatusInternalServerError
+	case Unavailable:
+		return http.StatusServiceUnavailable
+	case Unauthenticated:
+		return http.StatusUnauthorized
+	default:
+		return http.StatusInternalServerError
 	}
 }
