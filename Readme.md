@@ -14,7 +14,7 @@ As we're publishing this module in our private repo, you'll need to do following
 1. Add repo address to GOPRIVATE env, to prevent go from using the proxy server:
 
     ```bash
-    go env -w GOPRIVATE=gitlab.com/orderhq/rich-error
+    go env -w GOPRIVATE=github.com/vortahq/rich-error
     ```
 
     This is a shortcut for `GONOPROXY` and `GONOSUMDB`.

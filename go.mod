@@ -1,4 +1,4 @@
-module gitlab.com/orderhq/rich-error
+module github.com/vortahq/rich-error
 
 go 1.15
 
